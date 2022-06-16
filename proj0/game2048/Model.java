@@ -113,14 +113,42 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        this.board.setViewingPerspective(side);
+        for (int col = 0; col < this.board.size(); col += 1) {
+            if (tiltPerCol(col, this.board) == true) {
+                changed = true;
+            }
+        }
         checkGameOver();
         if (changed) {
             setChanged();
         }
+        this.board.setViewingPerspective(Side.NORTH);
         return changed;
     }
 
+    public boolean tiltPerCol(int col, Board b) {
+        boolean changed = false;
+        int targetRow = b.size() - 1;
+        for (int row = b.size() - 1; row >= 0; row -= 1) {
+            if (b.tile(col, row) != null && row != targetRow) {
+                if (b.tile(col, targetRow) == null || b.tile(col, row).value() == b.tile(col, targetRow).value()) {
+                    if (b.move(col, targetRow, b.tile(col, row)) == true) {
+                        this.score += b.tile(col, targetRow).value();
+                        targetRow -= 1;
+                    }
+                    changed = true;
+                } else {
+                    b.move(col, targetRow - 1, b.tile(col, row));
+                    targetRow -= 1;
+                    changed = true;
+                }
+            } else {
+                continue;
+            }
+        }
+        return changed;
+    }
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
      */
@@ -138,6 +166,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                if (b.tile(col, row) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +183,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                if (b.tile(col, row) != null) {
+                    if (b.tile(col, row).value() == MAX_PIECE) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -159,10 +203,39 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
-        return false;
+        if (emptySpaceExists(b)) {
+            return true;
+        } else return innerEqualAdjacent(b) || cornerEqualAdjacent(b);
     }
 
-
+    public static boolean innerEqualAdjacent(Board b) {
+        for (int col = 1; col < b.size() - 1; col += 1) {
+            for  (int row = 1; row < b.size() - 1; row += 1) {
+                if (b.tile(col, row).value() == b.tile(col - 1, row).value() ||
+                        b. tile(col, row).value() == b.tile(col + 1, row).value() ||
+                        b.tile(col, row).value() == b.tile(col, row + 1).value() ||
+                        b.tile(col, row).value() == b.tile(col, row - 1).value()
+                ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    public static boolean cornerEqualAdjacent(Board b) {
+        if (b.tile(0, 0).value() == b.tile(1, 0).value() ||
+                b.tile(0, 0).value() == b.tile(0, 1).value() ||
+                b.tile(0, b.size() - 1).value() == b.tile(0, b.size() - 2).value() ||
+                b.tile(0, b.size() - 1).value() == b.tile(1, b.size() - 1).value() ||
+                b.tile(b.size() - 1, 0).value() == b.tile(b.size() - 1, 1).value() ||
+                b.tile(b.size() - 1, 0).value() == b.tile(b.size() - 2, 0).value() ||
+                b.tile(b.size() - 1, b.size() - 1).value() == b.tile(b.size() - 2, b.size() - 1).value() ||
+                b.tile(b.size() - 1, b.size() - 1).value() == b.tile(b.size() - 1, b.size() - 2).value()
+    ) {
+         return true;
+        }
+        return false;
+    }
     @Override
      /** Returns the model as a string, used for debugging. */
     public String toString() {
