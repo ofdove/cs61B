@@ -7,7 +7,7 @@ public interface List<T> {
 
     public void addLast(T item);
 
-    public boolean isEmpty(T item);
+    public boolean isEmpty();
 
     public int size();
 
