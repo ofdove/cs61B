@@ -1,6 +1,9 @@
 package deque;
 
 import org.junit.Test;
+
+import java.lang.reflect.AnnotatedType;
+
 import static org.junit.Assert.*;
 
 public class ArrayDequeTest {
@@ -46,6 +49,8 @@ public class ArrayDequeTest {
         // should be empty
         assertTrue("lld1 should be empty after removal", lld1.isEmpty());
     }
+
+
     @Test
     /* Tests removing from an empty deque */
     public void removeEmptyTest() {
