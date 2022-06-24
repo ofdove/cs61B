@@ -21,13 +21,24 @@ public class ArrayDeque<T> implements List<T>{
 
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
-        System.arraycopy(items, nextLast, a, 0, size - nextLast);
-        if (nextFirst != items.length - 1) {
-            System.arraycopy(items, 0, a, size - nextLast, nextFirst + 1);
+        if (capacity > items.length) {
+            System.arraycopy(items, nextLast, a, 0, items.length - nextLast);
+            if (nextFirst != items.length - 1) {
+                System.arraycopy(items, 0, a, items.length - nextLast, nextFirst + 1);
+            }
+            items = a;
+            nextLast = size;
+            nextFirst = items.length - 1;
+        } else {
+            if (nextFirst < nextLast) {
+                System.arraycopy(items, nextFirst + 1, a, 0, nextLast - nextFirst - 1);
+            } else {
+                System.arraycopy(items, nextLast, a, 0, items.length - nextLast);
+                if (nextFirst != items.length - 1) {
+                    System.arraycopy(items, 0, a, items.length - nextLast, nextFirst + 1);
+                }
+            }
         }
-        items = a;
-        nextLast = size;
-        nextFirst = items.length - 1;
     }
     @Override
     public void addFirst(T item) {
@@ -67,7 +78,11 @@ public class ArrayDeque<T> implements List<T>{
 
     @Override
     public T get(int index) {
-        return items[index];
+        if (nextFirst + 1 + index >= items.length) {
+            return items[nextFirst + 1 + index - items.length];
+        } else {
+            return items[nextFirst + 1 + index];
+        }
     }
 
     @Override
@@ -88,9 +103,9 @@ public class ArrayDeque<T> implements List<T>{
 
     @Override
     public T removeFirst() {
-//        if (size - 1 < items.length / 4 | items.length > 8) {
-//            resize(items.length / 2);
-//        }
+        if (size - 1 < items.length / 4 & items.length > 8) {
+            resize(items.length / 2);
+        }
         if (isEmpty()) {
             return null;
         } else if (nextFirst + 1 == items.length) {
@@ -110,9 +125,9 @@ public class ArrayDeque<T> implements List<T>{
 
     @Override
     public T removeLast() {
-//        if (size - 1 < items.length / 4 | items.length > 8) {
-//            resize(items.length / 2);
-//        }
+        if (size - 1 < items.length / 4 & items.length > 8) {
+            resize(items.length / 2);
+        }
         if (isEmpty()) {
             return null;
         } else if (nextLast - 1 == -1) {
