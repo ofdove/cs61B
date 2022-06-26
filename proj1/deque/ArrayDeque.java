@@ -70,11 +70,14 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public T get(int index) {
-        if (nextFirst + 1 + index >= items.length) {
-            return items[nextFirst + 1 + index - items.length];
-        } else {
-            return items[nextFirst + 1 + index];
+        if (index < size) {
+            if (nextFirst + 1 + index >= items.length) {
+                return items[nextFirst + 1 + index - items.length];
+            } else {
+                return items[nextFirst + 1 + index];
+            }
         }
+        return null;
     }
 
     @Override

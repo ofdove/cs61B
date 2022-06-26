@@ -3,12 +3,10 @@ package deque;
 import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Deque<T> {
-    private T item;
-    private Node next;
     private class Node {
-        public T item;
-        public Node next;
-        public Node previous;
+        private T item;
+        private Node next;
+        private Node previous;
         public Node(T i, Node n, Node p) {
             item = i;
             next = n;
@@ -114,15 +112,15 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque)) {
+        if (!(o instanceof Deque)) {
             return false;
         } else {
-            LinkedListDeque d = (LinkedListDeque) o;
+            Deque d = (Deque) o;
             if (d.size() != this.size) {
                 return false;
             } else {
                 for (int i = 0; i < this.size(); i += 1) {
-                    if(!(this.get(i).equals(d.get(i)))) {
+                    if (!(this.get(i).equals(d.get(i)))) {
                         return false;
                     }
                 }

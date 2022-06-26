@@ -13,7 +13,7 @@ public class MaxArrayDeque<T> extends ArrayDeque<T>{
         return max(myComparator);
     }
 
-    private T max(Comparator<T> c) {
+    public T max(Comparator<T> c) {
         if (isEmpty()) {
             return null;
         }
