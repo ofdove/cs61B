@@ -3,9 +3,9 @@ package deque;
 import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Deque<T> {
-    public T item;
-    public Node next;
-    public class Node {
+    private T item;
+    private Node next;
+    private class Node {
         public T item;
         public Node next;
         public Node previous;
@@ -24,12 +24,12 @@ public class LinkedListDeque<T> implements Deque<T> {
         sentinel = new Node(null, sentinel, sentinel);
         size = 0;
     }
-    public LinkedListDeque(T x) {
-        sentinel = new Node(null, sentinel, sentinel);
-        sentinel.next = new Node(x, sentinel, sentinel);
-        sentinel.previous = sentinel.next;
-        size = 1;
-    }
+//    public LinkedListDeque(T x) {
+//        sentinel = new Node(null, sentinel, sentinel);
+//        sentinel.next = new Node(x, sentinel, sentinel);
+//        sentinel.previous = sentinel.next;
+//        size = 1;
+//    }
     @Override
     public void addFirst(T item) {
         if (isEmpty()) {
@@ -140,6 +140,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         return getRecursive(index - 1, d.next);
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new DequeIterator();
     }

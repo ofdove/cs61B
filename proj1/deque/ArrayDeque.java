@@ -156,6 +156,7 @@ public class ArrayDeque<T> implements Deque<T> {
         return true;
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new DequeIterator();
     }
@@ -171,7 +172,7 @@ public class ArrayDeque<T> implements Deque<T> {
         }
 
         public T next() {
-            T returnItem = items[pos];
+            T returnItem = get(pos);
             pos += 1;
             return returnItem;
         }
