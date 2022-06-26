@@ -2,12 +2,22 @@ package deque;
 
 import org.junit.Test;
 
-import java.lang.reflect.AnnotatedType;
-
 import static org.junit.Assert.*;
 
 public class ArrayDequeTest {
 
+    @Test
+    public void testEquals() {
+        ArrayDeque<Integer> a1 = new ArrayDeque<Integer>();
+        ArrayDeque<Integer> a2 = new ArrayDeque<Integer>();
+        a1.addFirst(4);
+        a2.addFirst(4);
+        a1.addFirst(5);
+        a2.addFirst(5);
+        a1.addFirst(6);
+        a2.addFirst(6);
+        assertTrue(a1.equals(a2));
+    }
     @Test
     public void testGet() {
         ArrayDeque<Integer> ard1 = new ArrayDeque<Integer>();

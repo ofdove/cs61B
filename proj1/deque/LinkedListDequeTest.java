@@ -1,12 +1,26 @@
 package deque;
 
 import org.junit.Test;
+
+import java.util.Iterator;
+
 import static org.junit.Assert.*;
 
 
 /** Performs some basic linked list tests. */
 public class LinkedListDequeTest {
-
+    @Test
+    public void testEquals() {
+        LinkedListDeque<Integer> a1 = new LinkedListDeque<>();
+        LinkedListDeque<Integer> a2 = new LinkedListDeque<>();
+        a1.addFirst(4);
+        a2.addFirst(4);
+        a1.addFirst(5);
+        a2.addFirst(5);
+        a1.addFirst(6);
+        a2.addFirst(6);
+        assertTrue(a1.equals(a2));
+    }
     @Test
     /** Adds a few things to the list, checking isEmpty() and size() are correct,
      * finally printing the results.

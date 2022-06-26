@@ -1,8 +1,8 @@
 package deque;
 
-import java.lang.reflect.Field;
+import java.util.Iterator;
 
-public class ArrayDeque<T> implements List<T>{
+public class ArrayDeque<T> implements Deque<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -66,14 +66,6 @@ public class ArrayDeque<T> implements List<T>{
             nextLast += 1;
         }
         size += 1;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        if (size == 0) {
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -142,6 +134,46 @@ public class ArrayDeque<T> implements List<T>{
             nextLast -= 1;
             size -= 1;
             return last;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ArrayDeque)) {
+            return false;
+        } else {
+            ArrayDeque d = (ArrayDeque) o;
+            if (d.size() != this.size) {
+                return false;
+            } else {
+                for (int i = 0; i < this.size(); i += 1) {
+                    if (!(this.get(i).equals(d.get(i)))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    public Iterator<T> iterator() {
+        return new DequeIterator();
+    }
+
+    private class DequeIterator implements Iterator<T> {
+        private int pos;
+
+        public DequeIterator() {
+            pos = 0;
+        }
+        public boolean hasNext() {
+            return pos < size;
+        }
+
+        public T next() {
+            T returnItem = items[pos];
+            pos += 1;
+            return returnItem;
         }
     }
 }
