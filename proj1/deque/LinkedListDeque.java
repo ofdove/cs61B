@@ -110,7 +110,6 @@ public class LinkedListDeque<T> implements Deque<T> {
         return d.item;
     }
 
-    @Override
     public boolean equals(Object o) {
         if (!(o instanceof Deque)) {
             return false;
@@ -138,24 +137,23 @@ public class LinkedListDeque<T> implements Deque<T> {
         return getRecursive(index - 1, d.next);
     }
 
-    @Override
     public Iterator<T> iterator() {
         return new DequeIterator();
     }
 
     private class DequeIterator implements Iterator<T> {
-        private Node pos;
+        private int pos;
         public DequeIterator() {
-            pos = sentinel.next;
+            pos = 0;
         }
 
         public boolean hasNext() {
-            return pos.next != sentinel;
+            return get(pos) != null;
         }
 
         public T next() {
-            T returnItem = pos.item;
-            pos = pos.next;
+            T returnItem = get(pos);
+            pos += 1;
             return returnItem;
         }
     }

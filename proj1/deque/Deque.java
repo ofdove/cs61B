@@ -8,11 +8,7 @@ public interface Deque<T> {
     void addLast(T item);
 
     default boolean isEmpty() {
-        int size = this.size();
-        if (size == 0) {
-            return true;
-        }
-        return false;
+        return this.size() == 0;
     }
 
     int size();
@@ -25,7 +21,4 @@ public interface Deque<T> {
 
     T get(int index);
 
-    boolean equals(Object o);
-
-    Iterator<T> iterator();
 }

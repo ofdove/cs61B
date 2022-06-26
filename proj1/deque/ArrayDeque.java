@@ -19,31 +19,28 @@ public class ArrayDeque<T> implements Deque<T> {
         return size;
     }
 
-    private void resize(int capacity) {
-        T[] a = (T[]) new Object[capacity];
-        if (capacity > items.length) {
-            System.arraycopy(items, nextLast, a, 0, items.length - nextLast);
-            if (nextFirst != items.length - 1) {
-                System.arraycopy(items, 0, a, items.length - nextLast, nextFirst + 1);
-            }
-            items = a;
-            nextLast = size;
-            nextFirst = items.length - 1;
-        } else {
-            if (nextFirst < nextLast) {
-                System.arraycopy(items, nextFirst + 1, a, 0, nextLast - nextFirst - 1);
-            } else {
-                System.arraycopy(items, nextLast, a, 0, items.length - nextLast);
-                if (nextFirst != items.length - 1) {
-                    System.arraycopy(items, 0, a, items.length - nextLast, nextFirst + 1);
-                }
-            }
+    private boolean isFull() {
+        return size == items.length;
+    }
+
+    private boolean isWasting() {
+        return size < items.length / 4 & size > 8;
+    }
+
+    private void resize() {
+        int newSize = 2 * size;
+        T[] a = (T[]) new Object[newSize];
+        for (int i = 0; i < size; i += 1) {
+            a[i] = get(i);
         }
+        nextFirst = a.length - 1;
+        nextLast = size;
+        items = a;
     }
     @Override
     public void addFirst(T item) {
-        if (size == items.length) {
-            resize(items.length * 2);
+        if (isFull()) {
+            resize();
         }
         items[nextFirst] = item;
         if (nextFirst - 1 == -1) {
@@ -56,8 +53,8 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public void addLast(T item) {
-        if (size == items.length) {
-            resize(items.length * 2);
+        if (isFull()) {
+            resize();
         }
         items[nextLast] = item;
         if (nextLast + 1 == items.length) {
@@ -98,8 +95,8 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public T removeFirst() {
-        if (size - 1 < items.length / 4 & items.length > 8) {
-            resize(items.length / 2);
+        if (isWasting()) {
+            resize();
         }
         if (isEmpty()) {
             return null;
@@ -120,8 +117,8 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public T removeLast() {
-        if (size - 1 < items.length / 4 & items.length > 8) {
-            resize(items.length / 2);
+        if (isWasting()) {
+            resize();
         }
         if (isEmpty()) {
             return null;
@@ -140,7 +137,6 @@ public class ArrayDeque<T> implements Deque<T> {
         }
     }
 
-    @Override
     public boolean equals(Object o) {
         if (!(o instanceof ArrayDeque)) {
             return false;
@@ -159,7 +155,6 @@ public class ArrayDeque<T> implements Deque<T> {
         return true;
     }
 
-    @Override
     public Iterator<T> iterator() {
         return new DequeIterator();
     }
@@ -171,7 +166,7 @@ public class ArrayDeque<T> implements Deque<T> {
             pos = 0;
         }
         public boolean hasNext() {
-            return pos < size;
+            return pos < size();
         }
 
         public T next() {
