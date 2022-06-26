@@ -141,7 +141,7 @@ public class ArrayDeque<T> implements Deque<T> {
         if (!(o instanceof ArrayDeque)) {
             return false;
         } else {
-            ArrayDeque d = (ArrayDeque) o;
+            Deque d = (Deque) o;
             if (d.size() != this.size) {
                 return false;
             } else {
@@ -162,7 +162,7 @@ public class ArrayDeque<T> implements Deque<T> {
     private class DequeIterator implements Iterator<T> {
         private int pos;
 
-        public DequeIterator() {
+        DequeIterator() {
             pos = 0;
         }
         public boolean hasNext() {

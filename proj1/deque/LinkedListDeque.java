@@ -7,7 +7,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         private T item;
         private Node next;
         private Node previous;
-        public Node(T i, Node n, Node p) {
+        Node(T i, Node n, Node p) {
             item = i;
             next = n;
             previous = p;
@@ -67,7 +67,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         if (isEmpty()) {
             return null;
         } else {
-            Node first = sentinel.next;
+            first = sentinel.next;
             sentinel.next.next.previous = sentinel;
             sentinel.next = sentinel.next.next;
             size -= 1;
@@ -79,7 +79,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         if (isEmpty()) {
             return null;
         } else {
-            Node last = sentinel.previous;
+            last = sentinel.previous;
             sentinel.previous.previous.next = sentinel;
             sentinel.previous = sentinel.previous.previous;
             size -= 1;
@@ -143,7 +143,7 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     private class DequeIterator implements Iterator<T> {
         private int pos;
-        public DequeIterator() {
+        DequeIterator() {
             pos = 0;
         }
 
