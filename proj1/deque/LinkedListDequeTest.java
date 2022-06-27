@@ -2,7 +2,6 @@ package deque;
 
 import org.junit.Test;
 
-import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
@@ -19,7 +18,7 @@ public class LinkedListDequeTest {
         a2.addFirst(5);
         a1.addFirst(6);
         a2.addFirst(6);
-        assertTrue(a1.equals(a2));
+        assertTrue(a2.equals(a1));
     }
     @Test
     /** Adds a few things to the list, checking isEmpty() and size() are correct,
