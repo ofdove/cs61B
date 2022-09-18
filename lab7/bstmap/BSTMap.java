@@ -137,12 +137,12 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
         }
     }
     /* Return if the map is empty or not */
-    public boolean isEmpty() {
+    private boolean isEmpty() {
         return size() == 0;
     }
 
 
-    public void removeMin() {
+    private void removeMin() {
         if (isEmpty()) {
             throw new NoSuchElementException("Symbol table underflow");
         }
