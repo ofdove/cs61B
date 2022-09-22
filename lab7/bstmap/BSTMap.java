@@ -1,5 +1,6 @@
 package bstmap;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -196,12 +197,23 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
     @Override
     /* Unsupported yet */
     public Set<K> keySet() {
-        throw new UnsupportedOperationException("set() is unsupported yet");
+        HashSet<K> set = new HashSet<>();
+        addKeys(root, set);
+        return set;
+    }
+
+    private void addKeys(Node node, Set<K> set) {
+        if (node == null) {
+            return;
+        }
+        set.add(node.key);
+        addKeys(node.left, set);
+        addKeys(node.right, set);
     }
 
     @Override
     /* Unsupported yet */
     public Iterator<K> iterator() {
-        throw new UnsupportedOperationException("iterator() is unsupported yet");
+        return keySet().iterator();
     }
 }
