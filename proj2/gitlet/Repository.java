@@ -423,6 +423,23 @@ public class Repository {
         }
     }
 
+    public static void reSet(String CID6) {
+        boolean foundCommit = false;
+        for (String CID : Objects.requireNonNull(plainFilenamesIn(COMMITS_DIR))) {
+            if (CID.contains(CID6)) {
+                clearStage(readObject(added, Stage.class), added);
+                clearStage(readObject(removed, Stage.class), removed);
+                writeContents(join(BRANCH_DIR, readContentsAsString(HEAD)), CID);
+                checkoutCommit(CID);
+                foundCommit = true;
+                break;
+            }
+        }
+        if (!foundCommit) {
+            System.out.println("No commit with that id exists.");
+        }
+    }
+
     public  static void checkoutFile(String fileName) {
         checkoutFile(fileName, getActiveBranch());
     }
@@ -490,7 +507,7 @@ public class Repository {
         //List<String> directoryFiles = plainFilenamesIn(CWD);
         if (plainFilenamesIn(CWD) != null) {
             for (String fileName : Objects.requireNonNull(plainFilenamesIn(CWD))) {
-                if (commit.archive.containsKey(fileName)) {
+                if (!commit.archive.containsKey(fileName)) {
                     restrictedDelete(fileName);
                 }
             }
