@@ -99,7 +99,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * OWN BUCKET DATA STRUCTURES WITH THE NEW OPERATOR!
      */
     protected Collection<Node> createBucket() {
-        return new HashSet<>();
+        return new LinkedList<>();
     }
 
     /**
@@ -137,10 +137,12 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     @Override
     public Set<K> keySet() {
         HashSet<K> set = new HashSet<K>();
-        for (K key : this) {
-            set.add(key);
+        for (Collection<Node> items : buckets) {
+            for (Node node : items) {
+                set.add(node.key);
+            }
         }
-        return set;
+            return set;
     }
 
     @Override
@@ -228,11 +230,14 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     private void resize(int capacity) {
         Collection<Node>[] newBuckets = createTable(capacity);
-        Iterator<Node> nodeIterator = new MyHashMapNodeIterator();
-        while (nodeIterator.hasNext()) {
-            Node node = nodeIterator.next();
-            int bucketIndex = getIndex(node.key, newBuckets);
-            newBuckets[bucketIndex].add(node);
+        for (int i = 0; i < capacity; i += 1) {
+            newBuckets[i] = createBucket();
+        }
+        for (int i = 0; i < buckets.length; i += 1) {
+            for (Node node : buckets[i]) {
+                int bucketIndex = getIndex(node.key, newBuckets);
+                newBuckets[bucketIndex].add(node);
+            }
         }
         buckets = newBuckets;
     }
@@ -242,38 +247,55 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         return new MyHashMapIterator();
     }
 
-    private class MyHashMapIterator implements Iterator<K> {
-        private final Iterator<Node> nodeIterator = new MyHashMapNodeIterator();
-        public boolean hasNext() {
-            return nodeIterator.hasNext();
-        }
-
-        public K next() {
-            return nodeIterator.next().key;
-        }
-    }
-
-    private class MyHashMapNodeIterator implements Iterator<Node> {
-        private final Iterator<Collection<Node>> bucketsIterator = Arrays.stream(buckets).iterator();
-        private Iterator<Node> currentBucketIterator;
-        private int nodesLeft = n;
-
-        public boolean hasNext() {
-            return nodesLeft > 0;
-        }
-
-        public Node next() {
-            if (currentBucketIterator == null || !currentBucketIterator.hasNext()) {
-                Collection<Node> currentBucket = bucketsIterator.next();
-                while (currentBucket.size() == 0) {
-                    currentBucket = bucketsIterator.next();
+    private class MyHashMapIterator implements Iterator {
+        Queue<Node> queue;
+        public MyHashMapIterator() {
+            queue = new LinkedList<>();
+            for (Collection<Node> items : buckets) {
+                for (Node node : items) {
+                    queue.add(node);
                 }
-                currentBucketIterator = currentBucket.iterator();
             }
-            nodesLeft -= 1;
-            return currentBucketIterator.next();
+        }
+        public Node next() {
+            return queue.poll();
+        }
+        public boolean hasNext() {
+            return !queue.isEmpty();
         }
     }
+//    private class MyHashMapIterator implements Iterator<K> {
+//        private final Iterator<Node> nodeIterator = new MyHashMapNodeIterator();
+//        public boolean hasNext() {
+//            return nodeIterator.hasNext();
+//        }
+//
+//        public K next() {
+//            return nodeIterator.next().key;
+//        }
+//    }
+//
+//    private class MyHashMapNodeIterator implements Iterator<Node> {
+//        private final Iterator<Collection<Node>> bucketsIterator = Arrays.stream(buckets).iterator();
+//        private Iterator<Node> currentBucketIterator;
+//        private int nodesLeft = n;
+//
+//        public boolean hasNext() {
+//            return nodesLeft > 0;
+//        }
+//
+//        public Node next() {
+//            if (currentBucketIterator == null || !currentBucketIterator.hasNext()) {
+//                Collection<Node> currentBucket = bucketsIterator.next();
+//                while (currentBucket.size() == 0) {
+//                    currentBucket = bucketsIterator.next();
+//                }
+//                currentBucketIterator = currentBucket.iterator();
+//            }
+//            nodesLeft -= 1;
+//            return currentBucketIterator.next();
+//        }
+//    }
     // Your code won't compile until you do so!
 
 }
