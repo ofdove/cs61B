@@ -1,21 +1,17 @@
 package gitlet;
 
 
-import javax.management.remote.JMXServerErrorException;
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author Hang
  */
 public class Repository {
     /**
@@ -55,14 +51,11 @@ public class Repository {
     /** The file of staging for removing */
     private static final File removed = join(STAGING_DIR, "removed");
 
-    /* TODO: fill in the rest of this class. */
 
-    /**
-     * TODO: create persistence area for the repo (commits, blobs)
-     * */
     public static void init() {
         if (GITLET_DIR.exists()) {
-            throw new RuntimeException("This directory has already been initialized as a repo");
+            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.exit(0);
         } else {
             setupPersistence();
             setInitialCommit();
@@ -109,11 +102,7 @@ public class Repository {
         return readObject(staged, Stage.class);
     }
 
-    /** implement the remove command
-     * TODO: unstage the file if it's staged for addition
-     * TODO: if the file is tracked by current commit, stage it for removal and remove the file
-     * TODO: DO NOT remove a file which is neither staged for addition nor tracked by current commit.
-     */
+    /** implement the remove command */
     public static void remove(String fileName) {
         File toRemove = join(CWD, fileName);
         String onlyRead = getActiveBranch();
@@ -182,12 +171,7 @@ public class Repository {
         return join(BRANCH_DIR, readContentsAsString(HEAD));
     }
 
-    /** implement the commit command
-     * TODO: create a new commit instance, whose archive is its parent's
-     * TODO: base on the stage for addition and stage for removal, modify the archive
-     * TODO: HEAD pointer points to the newest commit
-     * TODO: CID takes in the commit's the file (blob) references of its files, parent reference, message, and commit time.
-     * */
+    /** implement the commit command */
     public static void commit(String message, String parent2) {
         Commit current = new Commit(message, getActiveBranch(), parent2);
         current.setArchive(fromCommitFile(getActiveBranch()).archive);
@@ -233,13 +217,9 @@ public class Repository {
     }
 
     /**
-     * TODO: Tracked in the current commit, changed in the working directory, but not staged;
      * (modified)
-     * TODO: Staged for addition, but with different contents than in the working directory;
      * (modified)
-     * TODO: Staged for addition, but deleted in the working directory;
      * (deleted)
-     * TODO: Not staged for removal, but tracked in the current commit and deleted from the working directory.
      * */
     public static void status() {
         System.out.println("=== Branches ===");
@@ -248,12 +228,11 @@ public class Repository {
         assert branchFiles != null;
         for (String branch : branchFiles) {
             if (branch.equals(activeBranchName)) {
-                System.out.println("* " + branch);
+                System.out.println("*" + branch + "\n");
             } else {
                 System.out.println(branch);
             }
         }
-        System.out.println("\n");
         Set<String> directoryFiles = new HashSet<String>();
         if (plainFilenamesIn(CWD) != null) {
             directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
@@ -262,26 +241,23 @@ public class Repository {
         HashMap<String, String> removedFiles = readObject(removed, Stage.class).fbPair;
         System.out.println("=== Staged Files ===");
         for (String key : addedFiles.keySet()) {
-            System.out.println(key);
+            System.out.println(key + "\n");
         }
-        System.out.println("\n");
         System.out.println("=== Removed Files ===");
         for (String key : removedFiles.keySet()) {
-            System.out.println(key);
+            System.out.println(key + "\n");
         }
-        System.out.println("\n");
 
         System.out.println("=== Modifications Not Staged For Commit ===");
         deletedWithoutStage(directoryFiles);
         modifiedWithoutStage(directoryFiles);
 
-        System.out.println("\n");
-
+        System.out.print("\n");
         System.out.println("=== Untracked Files ===");
         for (String file : untrackedFiles(directoryFiles)) {
             System.out.println(file);
         }
-        System.out.println("\n");
+        System.out.print("\n");
     }
 
     private static Set<String> untrackedFiles (Set<String> directoryFiles) {
@@ -683,15 +659,6 @@ public class Repository {
     }
 
 
-    /**
-     * TODO: create GITLET_DIR
-     * TODO: create COMMITS_DIR
-     * TODO: create BLOBS_DIR
-     * TODO: create STAGING_DIR
-     * TODO: set the HEAD file to initialCommit
-     * TODO: create a stage for add
-     * TODO: create a stage for remove
-     * */
     private static void setupPersistence() {
         GITLET_DIR.mkdir();
         COMMITS_DIR.mkdir();

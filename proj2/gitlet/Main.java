@@ -3,7 +3,7 @@ package gitlet;
 import java.util.Objects;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+ *  @author Hang
  */
 public class Main {
 
@@ -11,7 +11,6 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
         if (args.length == 0) {
             System.out.println("Please at least type in some arguments.");
             System.exit(0);
