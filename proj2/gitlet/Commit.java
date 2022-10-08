@@ -31,12 +31,16 @@ public class Commit implements Serializable {
     /** The commit has a parent commit, represented as the parent commit's UID.*/
     private final String parent;
 
+    /** The other parent */
+    private final String parent2;
+
     /** a HashMap archives the commit's state(filename and BID) */
     public HashMap<String, String> archive;
 
-    public Commit(String message, String parent) {
+    public Commit(String message, String parent, String parent2) {
         this.message = message;
         this.parent = parent;
+        this.parent2 = parent2;
         // Initial commit has the UNIX time 0 stamp
         if (this.parent == null) {
             this.timeStamp = new Date(0);
@@ -48,6 +52,10 @@ public class Commit implements Serializable {
 
     public String getMessage() {
         return this.message;
+    }
+
+    public String getParent2() {
+        return this.parent2;
     }
 
     public void setArchive(HashMap<String, String> archive) {

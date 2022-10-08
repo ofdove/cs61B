@@ -70,7 +70,7 @@ public class Repository {
     }
     /** set the initial commit helper func */
     private static void setInitialCommit() {
-        Commit initial = new Commit("initial commit", null);
+        Commit initial = new Commit("initial commit", null, null);
         String sha1Generator = initial.archive.toString() + initial.getParent() + initial.getTimeStamp().toString() + initial.getMessage();
         initial.CID = sha1(sha1Generator);
         File initialCommit = join(COMMITS_DIR, initial.CID);
@@ -188,8 +188,8 @@ public class Repository {
      * TODO: HEAD pointer points to the newest commit
      * TODO: CID takes in the commit's the file (blob) references of its files, parent reference, message, and commit time.
      * */
-    public static void commit(String message) {
-        Commit current = new Commit(message, getActiveBranch());
+    public static void commit(String message, String parent2) {
+        Commit current = new Commit(message, getActiveBranch(), parent2);
         current.setArchive(fromCommitFile(getActiveBranch()).archive);
         modifyArchive(current.archive);
         String sha1Generator = current.archive.toString() + current.getParent() + current.getTimeStamp().toString() + current.getMessage();
@@ -440,7 +440,163 @@ public class Repository {
         }
     }
 
-    public  static void checkoutFile(String fileName) {
+    public static void merge(String branchName) {
+        String branchToMerge = readContentsAsString(join(BRANCH_DIR, branchName));
+        if (!fromStaged(added).fbPair.isEmpty() || !fromStaged(removed).fbPair.isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+        } else if (branchToMerge.equals(getActiveBranch())) {
+          System.out.println("Cannot merge a branch with itself.");
+        } else if (!Objects.requireNonNull(plainFilenamesIn(BRANCH_DIR)).contains(branchName)) {
+            System.out.println("A branch with that name does not exists.");
+        } else {
+            String splitPointCID = splitPoint(activeBranchFile().getName(), branchToMerge);
+            mergeCondition(getActiveBranch(), branchToMerge, splitPointCID);
+            System.out.println();
+            commit("Merged " + branchName + "into " + readContentsAsString(HEAD) + ".", branchToMerge);
+        }
+    }
+
+    private static void mergeCondition(String headCID, String branchToMerge, String splitPoint) {
+        Commit head = getCommit(headCID);
+        Commit other = getCommit(branchToMerge);
+        Commit split = getCommit(splitPoint);
+        boolean isConflicted = false;
+        Set<String> inter = head.archive.keySet();
+        inter.retainAll(other.archive.keySet());
+        Set<String> diffHead = other.archive.keySet();
+        diffHead.removeAll(head.archive.keySet());
+        Set<String> diffOther = head.archive.keySet();
+        diffOther.removeAll(other.archive.keySet());
+        for (String fileName : inter) {     //indicates that all BID below are not null
+            String headFile = head.archive.get(fileName);
+            String otherFile = other.archive.get(fileName);
+            String splitFile = split.archive.get(fileName);
+            if (!splitFile.equals(headFile)) {  //  modified in head
+                if (splitFile.equals(otherFile)) {     // 2
+                    continue;
+                } else {
+                    if (!headFile.equals(otherFile)) {     // 3.2(1) mod in both other and head
+                        conflictCon(fileName, headCID, branchToMerge);
+                        add(fileName);
+                        isConflicted = true;
+                    } else {    // 3.1
+                        continue;
+                    }
+                }
+            } else {    // unmodified in head
+                 if (!headFile.equals(otherFile)) {     // 1 add the file in other
+                    checkoutFile(fileName, branchToMerge);
+                    stageFor(fileName, getBlob(otherFile), added);
+                } else {    // unchanged all the time
+                    continue;
+                }
+            }
+        }
+        for (String fileName : diffHead) {  // in head not in other
+            String splitFile = split.archive.get(fileName);
+            String headFile = head.archive.get(fileName);
+            if (splitFile != null) {
+                if (!splitFile.equals(headFile)) {  // 3.2(2) mod in head and del in other
+                    conflictCon(fileName, headCID, null);
+                    add(fileName);
+                    isConflicted = true;
+                } else {    // 6 remove the file not in other
+                    stageFor(fileName, getBlob(headFile), removed);
+                    restrictedDelete(fileName);
+                }
+            } else {    // 4
+                continue;
+            }
+        }
+        for (String fileName : diffOther) {
+            String splitFile = split.archive.get(fileName);
+            String otherFile = split.archive.get(fileName);
+            if (splitFile != null) {
+                if (splitFile.equals(otherFile)) {  // 7
+                    continue;
+                } else {    // 3.2(3) mod in other del in head
+                    conflictCon(fileName, null, branchToMerge);
+                    add(fileName);
+                    isConflicted = true;
+                }
+            } else {    // 5 add the file in other
+                checkoutFile(fileName, branchToMerge);
+                stageFor(fileName, getBlob(otherFile), added);
+            }
+        }
+        if (isConflicted) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static void conflictCon(String fileName, String headCID, String branchToMerge) {
+        File conFile = join(CWD, fileName);
+        if (headCID == null) {
+        String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
+        writeContents(conFile, "<<<<<<< HEAD\n" + "=======\n" + otherContent + "\n>>>>>>>");
+        } else if (branchToMerge == null) {
+            String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
+            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n" + "=======\n" + ">>>>>>>");
+        } else {
+            String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
+            String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
+            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n" + "=======\n" + otherContent + "\n" + ">>>>>>>");
+        }
+    }
+
+    private static int depth(String CID, int number) {
+        if (getCommit(CID).getParent() == null) {
+            return number;
+        } else {
+            return depth(getCommit(CID).getParent(), number + 1);
+        }
+    }
+    private static String splitPoint(String headBranch, String branchToMerge) {
+        String headCID = getBranch(headBranch);
+        String mergeCID = getBranch(branchToMerge);
+        int margin = depth(headCID, 1) - depth(mergeCID, 1);
+        if (margin > 0) {
+            String balanced = getAncestor(headCID, margin);
+            if (balanced.equals(mergeCID)) {
+                System.out.println("Given branch is an ancestor of the current branch.");
+                System.exit(0);
+            }
+            return LCParent(balanced, mergeCID);
+        } else {
+            String balanced = getAncestor(mergeCID, margin);
+            if (balanced.equals(headCID)) {
+                checkoutBranch(branchToMerge);
+                System.out.println("Current branch fast-forwarded.");
+                System.exit(0);
+            }
+            return LCParent(balanced, headCID);
+        }
+    }
+
+    private static String getAncestor(String CID, int number) {
+        if (number == 0) {
+            return CID;
+        } else {
+            return getAncestor(parentOf(CID), number - 1);
+        }
+    }
+    private static String LCParent(String CID1, String CID2) {
+        if (parentOf(CID1) == null || parentOf(CID2) == null) {
+            return null;
+        } else if (parentOf(CID1).equals(parentOf(CID2))) {
+            return parentOf(CID1);
+        } else {
+            return LCParent(parentOf(CID1), parentOf(CID2));
+        }
+    }
+    private static String parentOf(String CID) {
+        return getCommit(CID).getParent();
+    }
+    private static String getBranch(String branchName) {
+        File branchFile = join(BRANCH_DIR, branchName);
+        return readContentsAsString(branchFile);
+    }
+    public static void checkoutFile(String fileName) {
         checkoutFile(fileName, getActiveBranch());
     }
     private static void checkoutFile(String fileName, String CID) {

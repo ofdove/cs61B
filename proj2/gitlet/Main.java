@@ -34,7 +34,7 @@ public class Main {
                 if (commitMessage == null) {
                     throw new GitletException("Need a commit message.");
                 }
-                Repository.commit(commitMessage);
+                Repository.commit(commitMessage, null);
                 break;
             case "log":
                 Repository.log(Repository.getHeadCommit());
@@ -81,6 +81,8 @@ public class Main {
                 Repository.reSet(CID);
                 break;
             case "merge":
+                String branchTomMerge = args[1];
+                Repository.merge(branchTomMerge);
                 break;
             default:
                 throw new GitletException(firstArg + "is not a valid argument");
