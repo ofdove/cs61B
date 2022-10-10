@@ -111,7 +111,6 @@ public class Repository {
             System.exit(0);
         } else {
             removeHelper(fileName, onlyRead);
-            restrictedDelete(toRemove);
         }
     }
 
@@ -137,14 +136,20 @@ public class Repository {
                 } else {    //not staged for addition, but it's tracked by parent commit
                     String BID = commitRead.archive.get(fileName);
                     stageFor(fileName, getBlob(BID), removed);
+                    restrictedDelete(toRead);
                 }
             } else if (!getContentSha1.equals(toReadSha1)) {    //staged for addition, but the content has been changed.
                 System.out.println("This file has been modified since last add, please add it again");
                 System.exit(0);
-            } else {    //staged for addition, no matter if it's tracked
-                String BID = stageRead.fbPair.get(fileName);
-                stageFor(fileName, getBlob(BID), removed);
-                unStage(stageRead, fileName, added);
+            } else {    //staged for addition, if it's tracked, delete it, and just unstage if not.
+                if (isTracked(toRead, commitRead)) {
+                    String BID = stageRead.fbPair.get(fileName);
+                    stageFor(fileName, getBlob(BID), removed);
+                    unStage(stageRead, fileName, added);
+                    restrictedDelete(toRead);
+                } else {
+                    unStage(stageRead, fileName, added);
+                }
             }
     }
     private static Blob getBlob(String BID) {
@@ -153,7 +158,12 @@ public class Repository {
     }
 
     private static boolean isTracked(File toRead, Commit commit) {
-        return getBlob(commit.archive.get(toRead.getName())).getContent().equals(readContentsAsString(toRead));
+        String contentBlob = commit.archive.get(toRead.getName());
+        if (contentBlob == null) {
+            return false;
+        } else {
+            return getBlob(contentBlob).getContent().equals(readContentsAsString(toRead));
+        }
     }
     /** helper func to get the head commit */
     public static Commit getHeadCommit() {
@@ -228,11 +238,12 @@ public class Repository {
         assert branchFiles != null;
         for (String branch : branchFiles) {
             if (branch.equals(activeBranchName)) {
-                System.out.println("*" + branch + "\n");
+                System.out.println("*" + branch);
             } else {
                 System.out.println(branch);
             }
         }
+        System.out.print("\n");
         Set<String> directoryFiles = new HashSet<String>();
         if (plainFilenamesIn(CWD) != null) {
             directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
@@ -241,13 +252,14 @@ public class Repository {
         HashMap<String, String> removedFiles = readObject(removed, Stage.class).fbPair;
         System.out.println("=== Staged Files ===");
         for (String key : addedFiles.keySet()) {
-            System.out.println(key + "\n");
+            System.out.println(key);
         }
+        System.out.print("\n");
         System.out.println("=== Removed Files ===");
         for (String key : removedFiles.keySet()) {
-            System.out.println(key + "\n");
+            System.out.println(key);
         }
-
+        System.out.print("\n");
         System.out.println("=== Modifications Not Staged For Commit ===");
         deletedWithoutStage(directoryFiles);
         modifiedWithoutStage(directoryFiles);
@@ -267,7 +279,7 @@ public class Repository {
             //boolean isTracked = isTracked(join(CWD, fileName), commit);
             HashMap<String, String> map = commit.archive;
             if (fromStaged(removed).fbPair.containsKey(fileName) ||
-                    (!fromStaged(added).fbPair.containsKey(fileName) && !commit.archive.containsKey(fileName))) {
+                    (!fromStaged(added).fbPair.containsKey(fileName) && !map.containsKey(fileName))) {
                 unTracked.add(fileName);
             }
         }
