@@ -78,14 +78,14 @@ public class Repository {
         Stage stageRead = readObject(removed, Stage.class);
         File toAdd = join(CWD, fileName);
         if (!toAdd.exists()) {
-            System.out.println("The file to add is not exist");
+            System.out.println("File does not exist.");
             System.exit(0);
         } else {
-            Blob blob = new Blob(toAdd);
-            File blobFile = Utils.join(BLOBS_DIR, blob.BID);
-            if (blobFile.exists()) {
-                return;
+            if (isTracked(toAdd, getHeadCommit())) {
+                unStage(stageRead, fileName, removed);
             } else {
+                Blob blob = new Blob(toAdd);
+                File blobFile = Utils.join(BLOBS_DIR, blob.BID);
                 writeObject(blobFile, blob);
                 stageFor(fileName, blob, added);
                 unStage(stageRead, fileName, removed);
@@ -131,7 +131,7 @@ public class Repository {
         String getContentSha1 = stageRead.fbPair.getOrDefault(fileName, "No such key");
             if (getContentSha1.equals("No such key")) {  //not staged for addition
                 if (!isTracked(toRead, commitRead)) {   //not tracked
-                    System.out.println("This file is not added to the repo, or has been modified since last commit, please add it anyway.");
+                    System.out.println("No reason ro remove the file.");
                     System.exit(0);
                 } else {    //not staged for addition, but it's tracked by parent commit
                     String BID = commitRead.archive.get(fileName);
@@ -139,7 +139,7 @@ public class Repository {
                     restrictedDelete(toRead);
                 }
             } else if (!getContentSha1.equals(toReadSha1)) {    //staged for addition, but the content has been changed.
-                System.out.println("This file has been modified since last add, please add it again");
+                System.out.println("No reason to remove the file.");
                 System.exit(0);
             } else {    //staged for addition, if it's tracked, delete it, and just unstage if not.
                 if (isTracked(toRead, commitRead)) {
@@ -215,14 +215,12 @@ public class Repository {
         assert commitFiles != null;
         for (String fileName : commitFiles) {
             if (messageToFind.equals(fromCommitFile(fileName).getMessage())) {
-                System.out.println(fromCommitFile(fileName).CID + "\n");
+                System.out.println(fromCommitFile(fileName).CID);
                 haveFound = true;
             }
         }
         if (!haveFound) {
-            System.out.println("Commit with such message doesn't exist.\n");
-        } else {
-            System.out.println("Commits with such message are listed above." + "\n");
+            System.out.println("Found no commit with that message.");
         }
     }
 
@@ -333,7 +331,6 @@ public class Repository {
 
     public static void branch(String branchName) {
         File newBranch = join(BRANCH_DIR, branchName);
-        writeContents(HEAD, branchName);
         writeContents(newBranch, getActiveBranch());
     }
 
@@ -594,7 +591,7 @@ public class Repository {
             String fileBID = commit.archive.get(fileName);
             writeContents(toCheckout, getBlob(fileBID).getContent());
         } else {
-            System.out.println("This file is not tracked by this commit.");
+            System.out.println("File does not exist in that commit.");
         }
     }
 
@@ -625,7 +622,7 @@ public class Repository {
         File branchFile = join(BRANCH_DIR, branchName);
         if (branchFile.exists()) {
             if (readContentsAsString(HEAD).equals(branchName)) {    //the checkout branch is current branch
-                System.out.println("The check-out branch is current branch, nothing changed.");
+                System.out.println("No need to checkout the current branch.");
             } else {    //
                 Commit commit = getCommit(readContentsAsString(branchFile));
                 if (!untracked.isEmpty()) {
@@ -642,7 +639,7 @@ public class Repository {
                 checkoutCommit(getActiveBranch());
             }
         } else {
-            System.out.println("No such branch.");
+            System.out.println("No such branch exists.");
         }
     }
 

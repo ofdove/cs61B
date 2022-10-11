@@ -30,8 +30,8 @@ public class Main {
                 break;
             case "commit":
                 String commitMessage = args[1];
-                if (commitMessage == null) {
-                    throw new GitletException("Need a commit message.");
+                if (commitMessage.length() == 0) {
+                    System.out.println("Please enter a commit message.");
                 }
                 Repository.commit(commitMessage, null);
                 break;
@@ -53,18 +53,18 @@ public class Main {
                     if (Objects.equals(args[1], "--")) {
                         Repository.checkoutFile(args[2]);
                     } else {
-                        System.out.println("Invalid args.");
+                        System.out.println("Incorrect operands.");
                     }
                 }else if (args.length == 4) {
                     if (Objects.equals(args[2], "--")) {
                         Repository.checkoutCommitFile(args[1], args[3]);
                     } else {
-                        System.out.println("Invalid args.");
+                        System.out.println("Incorrect operands.");
                     }
                 } else if (args.length == 2){
                     Repository.checkoutBranch(args[1]);
                 } else {
-                    System.out.println("Invalid args.");
+                    System.out.println("Incorrect operands.");
                 }
                 break;
             case "branch":
