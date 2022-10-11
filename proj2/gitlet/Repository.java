@@ -93,9 +93,13 @@ public class Repository {
         }
     }
     /** add to stage helper func */
-    private static void stageFor(String fileName,Blob blob, File addOrRm) {
+    private static void stageFor(String fileName, Blob blob, File addOrRm) {
         Stage toMod = fromStaged(addOrRm);
-        toMod.fbPair.put(fileName, blob.BID);
+        if (blob == null) {
+            toMod.fbPair.put(fileName, null);
+        } else {
+            toMod.fbPair.put(fileName, blob.BID);
+        }
         writeObject(addOrRm, toMod);
     }
     private static Stage fromStaged(File staged) {
@@ -104,9 +108,16 @@ public class Repository {
 
     /** implement the remove command */
     public static void remove(String fileName) {
+        Set<String> directoryFiles = new HashSet<String>();
+        if (plainFilenamesIn(CWD) != null) {
+            directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
+        }
+        Set<String> deleted = deletedWithoutStage(directoryFiles);
         File toRemove = join(CWD, fileName);
         String onlyRead = getActiveBranch();
-        if (!toRemove.exists()) {
+        if (deleted.contains(fileName)) {
+            stageFor(fileName, null, removed);
+        } else if (!toRemove.exists()) {
             System.out.println("No such file to remove");
             System.exit(0);
         } else {
@@ -259,8 +270,12 @@ public class Repository {
         }
         System.out.print("\n");
         System.out.println("=== Modifications Not Staged For Commit ===");
-        deletedWithoutStage(directoryFiles);
-        modifiedWithoutStage(directoryFiles);
+        for (String fileName : deletedWithoutStage(directoryFiles)) {
+            System.out.println(fileName + " (deleted)");
+        }
+        for (String fileName : modifiedWithoutStage(directoryFiles)) {
+            System.out.println(fileName + " (modified)");
+        }
 
         System.out.print("\n");
         System.out.println("=== Untracked Files ===");
@@ -284,48 +299,43 @@ public class Repository {
         return unTracked;
     }
 
-    private static void modifiedWithoutStage(Set<String> directoryFiles) {
+    private static Set<String> modifiedWithoutStage(Set<String> directoryFiles) {
         Commit commit = getHeadCommit();
         HashMap<String, String> fileToCompare = new HashMap<String, String>();
         HashMap<String, String> addedFiles = fromStaged(added).fbPair;
-        Set<String> hasDisplayed = new HashSet<String>();
+        Set<String> toDisplay = new HashSet<String>();
         for (String fileName : directoryFiles) {
             File toCompare = join(CWD, fileName);
             fileToCompare.put(fileName, new Blob(toCompare).BID);
         }
         for (String key : addedFiles.keySet()) {
             if (fileToCompare.get(key) != null && !addedFiles.get(key).equals(fileToCompare.get(key))) {
-                System.out.println(key + " (modified)");
-                hasDisplayed.add(key);
+                toDisplay.add(key);
             }
         }
         for (String key : commit.archive.keySet()) {
             if (fileToCompare.get(key) != null && !commit.archive.get(key).equals(fileToCompare.get(key))) {
-                if (!hasDisplayed.contains(key)) {
-                    System.out.println(key + " (modified)");
-                }
+                toDisplay.add(key);
             }
         }
+        return toDisplay;
     }
 
-    private static void deletedWithoutStage(Set<String> directoryFiles) {
+    private static Set<String> deletedWithoutStage(Set<String> directoryFiles) {
         Commit commit = getHeadCommit();
         Set<String> addedFiles = new HashSet<String>(fromStaged(added).fbPair.keySet());
         Set<String> removedFiles = new HashSet<String>(fromStaged(removed).fbPair.keySet());
-        Set<String> hasDisplayed = new HashSet<String>();
+        Set<String> toDisplay = new HashSet<String>();
         Set<String> commitFiles = commit.archive.keySet();
         for (String fileName : addedFiles) {
             if (!directoryFiles.contains(fileName)) {
-                System.out.println(fileName + " (deleted)");
-                hasDisplayed.add(fileName);
+                toDisplay.add(fileName);
             }
         }
         commitFiles.removeAll(removedFiles);
         commitFiles.removeAll(directoryFiles);
-        commitFiles.removeAll(hasDisplayed);
-        for (String fileName : commitFiles) {
-            System.out.println(fileName + " (deleted)");
-        }
+        toDisplay.addAll(commitFiles);
+        return toDisplay;
     }
 
 
@@ -373,13 +383,18 @@ public class Repository {
     /** helper func to update the commit's archive */
     private static void modifyArchive(HashMap<String, String> archive) {
         Stage refAdd = fromStaged(added);
-        pairFromStage(refAdd, archive, true);
         Stage refRm = fromStaged(removed);
-        pairFromStage(refRm, archive, false);
-        writeObject(added, refAdd);
-        writeObject(removed, refRm);
-        clearStage(refAdd, added);
-        clearStage(refRm, removed);
+        if (refRm.fbPair.isEmpty() && refAdd.fbPair.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        } else {
+            pairFromStage(refAdd, archive, true);
+            pairFromStage(refRm, archive, false);
+            writeObject(added, refAdd);
+            writeObject(removed, refRm);
+            clearStage(refAdd, added);
+            clearStage(refRm, removed);
+        }
     }
     /** helper func to get the fbPair from stage */
     private static void pairFromStage(Stage toGet, HashMap<String, String> toMod, boolean isAdd) {
