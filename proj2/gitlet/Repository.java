@@ -341,7 +341,11 @@ public class Repository {
 
     public static void branch(String branchName) {
         File newBranch = join(BRANCH_DIR, branchName);
-        writeContents(newBranch, getActiveBranch());
+        if (newBranch.exists()) {
+            System.out.println("A branch with that name already exists.");
+        } else {
+            writeContents(newBranch, getActiveBranch());
+        }
     }
 
     public static void rmBranch(String branchName) {
@@ -351,7 +355,7 @@ public class Repository {
         } else {
             for (String fileName : Objects.requireNonNull(plainFilenamesIn(BRANCH_DIR))) {
                 if (fileName.equals(branchName)) {
-                    restrictedDelete(join(BRANCH_DIR, fileName));
+                    join(BRANCH_DIR, fileName).delete();
                     removed = true;
                 }
             }
@@ -449,7 +453,7 @@ public class Repository {
         } else if (!Objects.requireNonNull(plainFilenamesIn(BRANCH_DIR)).contains(branchName)) {
             System.out.println("A branch with that name does not exists.");
         } else {
-            String splitPointCID = splitPoint(activeBranchFile().getName(), branchToMerge);
+            String splitPointCID = splitPoint(activeBranchFile().getName(), branchName);
             mergeCondition(getActiveBranch(), branchToMerge, splitPointCID);
             System.out.println();
             commit("Merged " + branchName + "into " + readContentsAsString(HEAD) + ".", branchToMerge);
@@ -461,12 +465,12 @@ public class Repository {
         Commit other = getCommit(branchToMerge);
         Commit split = getCommit(splitPoint);
         boolean isConflicted = false;
-        Set<String> inter = head.archive.keySet();
+        Set<String> inter = new HashSet<String>(head.archive.keySet());
         inter.retainAll(other.archive.keySet());
-        Set<String> diffHead = other.archive.keySet();
-        diffHead.removeAll(head.archive.keySet());
-        Set<String> diffOther = head.archive.keySet();
-        diffOther.removeAll(other.archive.keySet());
+        Set<String> diffOther = new HashSet<String>(other.archive.keySet());
+        diffOther.removeAll(head.archive.keySet());
+        Set<String> diffHead = new HashSet<String>(head.archive.keySet());
+        diffHead.removeAll(other.archive.keySet());
         for (String fileName : inter) {     //indicates that all BID below are not null
             String headFile = head.archive.get(fileName);
             String otherFile = other.archive.get(fileName);
@@ -510,7 +514,7 @@ public class Repository {
         }
         for (String fileName : diffOther) {
             String splitFile = split.archive.get(fileName);
-            String otherFile = split.archive.get(fileName);
+            String otherFile = other.archive.get(fileName);
             if (splitFile != null) {
                 if (splitFile.equals(otherFile)) {  // 7
                     continue;
@@ -630,16 +634,16 @@ public class Repository {
 
     public static void checkoutBranch(String branchName) {
         Set<String> directoryFiles = new HashSet<>();
-        Set<String> untracked = untrackedFiles(directoryFiles);
         if (plainFilenamesIn(CWD) != null) {
             directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
         }
+        Set<String> untracked = untrackedFiles(directoryFiles);
         File branchFile = join(BRANCH_DIR, branchName);
         if (branchFile.exists()) {
             if (readContentsAsString(HEAD).equals(branchName)) {    //the checkout branch is current branch
                 System.out.println("No need to checkout the current branch.");
             } else {    //
-                Commit commit = getCommit(readContentsAsString(branchFile));
+                Commit commit = getCommit(getActiveBranch());
                 if (!untracked.isEmpty()) {
                     for (String fileName : untracked) {
                         if (!commit.archive.containsKey(fileName)) {

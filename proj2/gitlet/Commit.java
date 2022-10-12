@@ -65,10 +65,6 @@ public class Commit implements Serializable {
         return this.timeStamp;
     }
 
-    public String getCID() {
-        return this.CID;
-    }
-
     public File getToFile() {
         return join(COMMITS_DIR, this.CID);
     }
