@@ -368,6 +368,9 @@ public class Repository {
     private static void logContent(Commit commit) {
         System.out.println("===");
         System.out.println("commit " + commit.CID);
+        if (commit.getParent2() != null) {
+            System.out.println("Merge: " + commit.getParent().substring(0, 8) + " " + commit.getParent2().substring(0, 8));
+        }
         System.out.println(
                 "Date: " + new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z",
                         new Locale("en")).format(commit.getTimeStamp())
@@ -537,14 +540,14 @@ public class Repository {
         File conFile = join(CWD, fileName);
         if (headCID == null) {
         String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
-        writeContents(conFile, "<<<<<<< HEAD\n" + "=======\n" + otherContent + "\n>>>>>>>");
+        writeContents(conFile, "<<<<<<< HEAD\n" + "\n=======\n" + otherContent + ">>>>>>>");
         } else if (branchToMerge == null) {
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
-            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n" + "=======\n" + ">>>>>>>");
+            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n=======\n" + ">>>>>>>");
         } else {
             String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
-            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n" + "=======\n" + otherContent + "\n" + ">>>>>>>");
+            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n=======\n" + otherContent + ">>>>>>>");
         }
     }
 
