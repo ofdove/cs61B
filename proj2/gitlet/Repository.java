@@ -459,7 +459,7 @@ public class Repository {
             String splitPointCID = splitPoint(activeBranchFile().getName(), branchName);
             mergeCondition(getActiveBranch(), branchToMerge, splitPointCID);
             System.out.println();
-            commit("Merged " + branchName + "into " + readContentsAsString(HEAD) + ".", branchToMerge);
+            commit("Merged " + branchName + " into " + readContentsAsString(HEAD) + ".", branchToMerge);
         }
     }
 
@@ -540,7 +540,7 @@ public class Repository {
         File conFile = join(CWD, fileName);
         if (headCID == null) {
         String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
-        writeContents(conFile, "<<<<<<< HEAD\n" + "\n=======\n" + otherContent + ">>>>>>>");
+        writeContents(conFile, "<<<<<<< HEAD\n" + "=======\n" + otherContent + ">>>>>>>");
         } else if (branchToMerge == null) {
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
             writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n=======\n" + ">>>>>>>");
