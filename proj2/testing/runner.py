@@ -1,6 +1,6 @@
 import sys, re
 from subprocess import \
-    check_output, PIPE, STDOUT, DEVNULL, CalledProcessError, TimeoutExpired
+check_output, PIPE, STDOUT, DEVNULL, CalledProcessError, TimeoutExpired
 from os.path import abspath, basename, dirname, exists, join, splitext, isdir
 from getopt import getopt, GetoptError
 from os import chdir, environ, getcwd, mkdir, remove

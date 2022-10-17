@@ -307,17 +307,25 @@ public class Repository {
         for (String fileName : directoryFiles) {
             File toCompare = join(CWD, fileName);
             fileToCompare.put(fileName, new Blob(toCompare).BID);
-        }
-        for (String key : addedFiles.keySet()) {
-            if (fileToCompare.get(key) != null && !addedFiles.get(key).equals(fileToCompare.get(key))) {
-                toDisplay.add(key);
+//            if (!addedFiles.get(fileName).equals(fileToCompare.get(fileName))
+//                    || !commit.archive.get(fileName).equals(fileToCompare.get(fileName))) {
+//                toDisplay.add(fileName);
+//            }
+            if ((addedFiles.containsKey(fileName) && !addedFiles.get(fileName).equals(fileToCompare.get(fileName)))
+                    || (commit.archive.containsKey(fileName) && !commit.archive.get(fileName).equals(fileToCompare.get(fileName)))) {
+                toDisplay.add(fileName);
             }
         }
-        for (String key : commit.archive.keySet()) {
-            if (fileToCompare.get(key) != null && !commit.archive.get(key).equals(fileToCompare.get(key))) {
-                toDisplay.add(key);
-            }
-        }
+//        for (String key : addedFiles.keySet()) {
+//            if (fileToCompare.get(key) != null && !addedFiles.get(key).equals(fileToCompare.get(key))) {
+//                toDisplay.add(key);
+//            }
+//        }
+//        for (String key : commit.archive.keySet()) {
+//            if (fileToCompare.get(key) != null && !commit.archive.get(key).equals(fileToCompare.get(key))) {
+//                toDisplay.add(key);
+//            }
+//        }
         return toDisplay;
     }
 
@@ -369,7 +377,7 @@ public class Repository {
         System.out.println("===");
         System.out.println("commit " + commit.CID);
         if (commit.getParent2() != null) {
-            System.out.println("Merge: " + commit.getParent().substring(0, 8) + " " + commit.getParent2().substring(0, 8));
+            System.out.println("Merge: " + commit.getParent().substring(0, 7) + " " + commit.getParent2().substring(0, 7));
         }
         System.out.println(
                 "Date: " + new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z",
@@ -448,13 +456,15 @@ public class Repository {
     }
 
     public static void merge(String branchName) {
+        if (!join(BRANCH_DIR, branchName).exists()) {
+            System.out.println("A branch with that name does not exists.");
+            System.exit(0);
+        }
         String branchToMerge = readContentsAsString(join(BRANCH_DIR, branchName));
         if (!fromStaged(added).fbPair.isEmpty() || !fromStaged(removed).fbPair.isEmpty()) {
             System.out.println("You have uncommitted changes.");
         } else if (branchToMerge.equals(getActiveBranch())) {
           System.out.println("Cannot merge a branch with itself.");
-        } else if (!Objects.requireNonNull(plainFilenamesIn(BRANCH_DIR)).contains(branchName)) {
-            System.out.println("A branch with that name does not exists.");
         } else {
             String splitPointCID = splitPoint(activeBranchFile().getName(), branchName);
             mergeCondition(getActiveBranch(), branchToMerge, splitPointCID);
@@ -538,16 +548,30 @@ public class Repository {
 
     private static void conflictCon(String fileName, String headCID, String branchToMerge) {
         File conFile = join(CWD, fileName);
+        StringBuilder text = new StringBuilder();
         if (headCID == null) {
-        String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
-        writeContents(conFile, "<<<<<<< HEAD\n" + "=======\n" + otherContent + ">>>>>>>");
+            String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
+            text.append("<<<<<<< HEAD").append("\n");
+            text.append("=======").append("\n");
+            text.append(otherContent).append("\n");
+            text.append(">>>>>>>");
+            writeContents(conFile, text.toString());
         } else if (branchToMerge == null) {
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
-            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n=======\n" + ">>>>>>>");
+            text.append("<<<<<<< HEAD").append("\n");
+            text.append(headContent).append("\n");
+            text.append("=======").append("\n");
+            text.append(">>>>>>>");
+            writeContents(conFile, text.toString());
         } else {
             String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
-            writeContents(conFile, "<<<<<<< HEAD\n" + headContent + "\n=======\n" + otherContent + ">>>>>>>");
+            text.append("<<<<<<< HEAD").append("\n");
+            text.append(headContent).append("\n");
+            text.append("=======").append("\n");
+            text.append(otherContent);
+            text.append(">>>>>>>");
+            writeContents(conFile, text.toString());
         }
     }
 
