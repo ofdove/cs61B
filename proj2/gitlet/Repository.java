@@ -307,25 +307,11 @@ public class Repository {
         for (String fileName : directoryFiles) {
             File toCompare = join(CWD, fileName);
             fileToCompare.put(fileName, new Blob(toCompare).BID);
-//            if (!addedFiles.get(fileName).equals(fileToCompare.get(fileName))
-//                    || !commit.archive.get(fileName).equals(fileToCompare.get(fileName))) {
-//                toDisplay.add(fileName);
-//            }
             if ((addedFiles.containsKey(fileName) && !addedFiles.get(fileName).equals(fileToCompare.get(fileName)))
                     || (commit.archive.containsKey(fileName) && !commit.archive.get(fileName).equals(fileToCompare.get(fileName)))) {
                 toDisplay.add(fileName);
             }
         }
-//        for (String key : addedFiles.keySet()) {
-//            if (fileToCompare.get(key) != null && !addedFiles.get(key).equals(fileToCompare.get(key))) {
-//                toDisplay.add(key);
-//            }
-//        }
-//        for (String key : commit.archive.keySet()) {
-//            if (fileToCompare.get(key) != null && !commit.archive.get(key).equals(fileToCompare.get(key))) {
-//                toDisplay.add(key);
-//            }
-//        }
         return toDisplay;
     }
 
@@ -553,24 +539,24 @@ public class Repository {
             String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
             text.append("<<<<<<< HEAD").append("\n");
             text.append("=======").append("\n");
-            text.append(otherContent).append("\n");
-            text.append(">>>>>>>");
+            text.append(otherContent);
+            text.append(">>>>>>>").append("\n");
             writeContents(conFile, text.toString());
         } else if (branchToMerge == null) {
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
             text.append("<<<<<<< HEAD").append("\n");
-            text.append(headContent).append("\n");
+            text.append(headContent);
             text.append("=======").append("\n");
-            text.append(">>>>>>>");
+            text.append(">>>>>>>").append("\n");
             writeContents(conFile, text.toString());
         } else {
             String otherContent = getBlob(getCommit(branchToMerge).archive.get(fileName)).getContent();
             String headContent = getBlob(getCommit(headCID).archive.get(fileName)).getContent();
             text.append("<<<<<<< HEAD").append("\n");
-            text.append(headContent).append("\n");
+            text.append(headContent);
             text.append("=======").append("\n");
             text.append(otherContent);
-            text.append(">>>>>>>");
+            text.append(">>>>>>>").append("\n");
             writeContents(conFile, text.toString());
         }
     }
