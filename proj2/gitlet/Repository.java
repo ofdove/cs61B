@@ -443,14 +443,20 @@ public class Repository {
 
     public static void merge(String branchName) {
         if (!join(BRANCH_DIR, branchName).exists()) {
-            System.out.println("A branch with that name does not exists.");
+            System.out.println("A branch with that name does not exist.");
             System.exit(0);
         }
         String branchToMerge = readContentsAsString(join(BRANCH_DIR, branchName));
+        Set<String> directoryFiles = new HashSet<>();
+        if (plainFilenamesIn(CWD) != null) {
+            directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
+        }
         if (!fromStaged(added).fbPair.isEmpty() || !fromStaged(removed).fbPair.isEmpty()) {
             System.out.println("You have uncommitted changes.");
         } else if (branchToMerge.equals(getActiveBranch())) {
-          System.out.println("Cannot merge a branch with itself.");
+            System.out.println("Cannot merge a branch with itself.");
+        } else if (!untrackedFiles(directoryFiles).isEmpty()) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
         } else {
             String splitPointCID = splitPoint(activeBranchFile().getName(), branchName);
             mergeCondition(getActiveBranch(), branchToMerge, splitPointCID);
@@ -561,53 +567,73 @@ public class Repository {
         }
     }
 
-    private static int depth(String CID, int number) {
-        if (getCommit(CID).getParent() == null) {
-            return number;
-        } else {
-            return depth(getCommit(CID).getParent(), number + 1);
-        }
-    }
+//    private static int depth(String CID, int number) {
+//        if (getCommit(CID).getParent() == null) {
+//            return number;
+//        } else if (getCommit(CID).getParent2() != null) {
+//            return Math.min(depth(getCommit(CID).getParent(), number + 1), depth(getCommit(CID).getParent2(), number + 1));
+//        } else {
+//            return depth(getCommit(CID).getParent(), number + 1);
+//        }
+//    }
     private static String splitPoint(String headBranch, String branchToMerge) {
         String headCID = getBranch(headBranch);
         String mergeCID = getBranch(branchToMerge);
-        int margin = depth(headCID, 1) - depth(mergeCID, 1);
-        if (margin > 0) {
-            String balanced = getAncestor(headCID, margin);
-            if (balanced.equals(mergeCID)) {
-                System.out.println("Given branch is an ancestor of the current branch.");
-                System.exit(0);
+        String initCID = null;
+        Queue<String> toCheck = new LinkedList<>();
+        Queue<String> ancientSet = new LinkedList<>();
+        toCheck.offer(mergeCID);
+        while (!toCheck.isEmpty()) {
+            String node = toCheck.poll();
+            for (String nodesParent : parentsOf(node)) {
+                ancientSet.offer(nodesParent);
+                toCheck.offer(nodesParent);
             }
-            return LCParent(balanced, mergeCID);
-        } else {
-            String balanced = getAncestor(mergeCID, margin);
-            if (balanced.equals(headCID)) {
-                checkoutBranch(branchToMerge);
-                System.out.println("Current branch fast-forwarded.");
-                System.exit(0);
-            }
-            return LCParent(balanced, headCID);
         }
+        toCheck.offer(headCID);
+        while (!toCheck.isEmpty()) {
+            String node = toCheck.poll();
+            if (!parentsOf(node).isEmpty()) {
+                for (String nodesParent : parentsOf(node)) {
+                    if (ancientSet.contains(nodesParent)) {
+                        return nodesParent;
+                    }
+                    toCheck.offer(nodesParent);
+                }
+            } else {
+                initCID = node;
+            }
+        }
+        return initCID;
     }
 
-    private static String getAncestor(String CID, int number) {
-        if (number == 0) {
-            return CID;
-        } else {
-            return getAncestor(parentOf(CID), number - 1);
+//    private static String getAncestor(String CID, int number) {
+//        if (number == 0) {
+//            return CID;
+//        } else {
+//            return getAncestor(parentOf(CID), number - 1);
+//        }
+//    }
+//    private static String LCParent(String CID1, String CID2) {
+//        if (parentOf(CID1) == null || parentOf(CID2) == null) {
+//            return null;
+//        } else if (parentOf(CID1).equals(parentOf(CID2))) {
+//            return parentOf(CID1);
+//        } else {
+//            return LCParent(parentOf(CID1), parentOf(CID2));
+//        }
+//    }
+    private static Queue<String> parentsOf(String CID) {
+        Queue<String> parents = new LinkedList<>();
+        String parent1 = getCommit(CID).getParent();
+        String parent2 = getCommit(CID).getParent2();
+        if (parent1 != null) {
+            parents.offer(parent1);
         }
-    }
-    private static String LCParent(String CID1, String CID2) {
-        if (parentOf(CID1) == null || parentOf(CID2) == null) {
-            return null;
-        } else if (parentOf(CID1).equals(parentOf(CID2))) {
-            return parentOf(CID1);
-        } else {
-            return LCParent(parentOf(CID1), parentOf(CID2));
+        if (parent2 != null) {
+            parents.offer(parent2);
         }
-    }
-    private static String parentOf(String CID) {
-        return getCommit(CID).getParent();
+        return parents;
     }
     private static String getBranch(String branchName) {
         File branchFile = join(BRANCH_DIR, branchName);
