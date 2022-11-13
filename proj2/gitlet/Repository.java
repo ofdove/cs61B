@@ -241,6 +241,10 @@ public class Repository {
      * (deleted)
      * */
     public static void status() {
+        if (!GITLET_DIR.exists()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
         System.out.println("=== Branches ===");
         List<String> branchFiles = plainFilenamesIn(BRANCH_DIR);
         String activeBranchName = activeBranchFile().getName();
@@ -426,18 +430,27 @@ public class Repository {
 
     public static void reSet(String CID6) {
         boolean foundCommit = false;
-        for (String CID : Objects.requireNonNull(plainFilenamesIn(COMMITS_DIR))) {
-            if (CID.contains(CID6)) {
-                clearStage(readObject(added, Stage.class), added);
-                clearStage(readObject(removed, Stage.class), removed);
-                writeContents(join(BRANCH_DIR, readContentsAsString(HEAD)), CID);
-                checkoutCommit(CID);
-                foundCommit = true;
-                break;
-            }
+        Set<String> directoryFiles = new HashSet<>();
+        if (plainFilenamesIn(CWD) != null) {
+            directoryFiles.addAll(Objects.requireNonNull(plainFilenamesIn(CWD)));
         }
-        if (!foundCommit) {
-            System.out.println("No commit with that id exists.");
+        if (!untrackedFiles(directoryFiles).isEmpty()) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        } else {
+            for (String CID : Objects.requireNonNull(plainFilenamesIn(COMMITS_DIR))) {
+                if (CID.contains(CID6)) {
+                    clearStage(readObject(added, Stage.class), added);
+                    clearStage(readObject(removed, Stage.class), removed);
+                    writeContents(join(BRANCH_DIR, readContentsAsString(HEAD)), CID);
+                    checkoutCommit(CID);
+                    foundCommit = true;
+                    break;
+                }
+            }
+            if (!foundCommit) {
+                System.out.println("No commit with that id exists.");
+            }
         }
     }
 

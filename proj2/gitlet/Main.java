@@ -12,7 +12,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.out.println("Please at least type in some arguments.");
+            System.out.println("Please enter a command.");
             System.exit(0);
         }
         String firstArg = args[0];
@@ -84,7 +84,7 @@ public class Main {
                 Repository.merge(branchTomMerge);
                 break;
             default:
-                throw new GitletException(firstArg + "is not a valid argument");
+                System.out.println("No command with that name exists.");
             }
         }
     }
