@@ -595,6 +595,7 @@ public class Repository {
         String initCID = null;
         Queue<String> toCheck = new LinkedList<>();
         Queue<String> ancientSet = new LinkedList<>();
+        ancientSet.offer(mergeCID);
         toCheck.offer(mergeCID);
         while (!toCheck.isEmpty()) {
             String node = toCheck.poll();
@@ -604,11 +605,20 @@ public class Repository {
             }
         }
         toCheck.offer(headCID);
+        if (ancientSet.contains(headCID)) {
+            checkoutBranch(branchToMerge);
+            System.out.println("Current branch fast-forwarded.");
+            System.exit(0);
+        }
         while (!toCheck.isEmpty()) {
             String node = toCheck.poll();
             if (!parentsOf(node).isEmpty()) {
                 for (String nodesParent : parentsOf(node)) {
                     if (ancientSet.contains(nodesParent)) {
+                        if (nodesParent.equals(mergeCID)) {
+                            System.out.println("Given branch is an ancestor of the current branch.");
+                            System.exit(0);
+                        }
                         return nodesParent;
                     }
                     toCheck.offer(nodesParent);
