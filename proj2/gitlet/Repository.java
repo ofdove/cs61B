@@ -140,28 +140,28 @@ public class Repository {
         File toRead = join(CWD, fileName);
         String toReadSha1 = sha1(toRead.getName() + readContentsAsString(toRead));
         String getContentSha1 = stageRead.fbPair.getOrDefault(fileName, "No such key");
-            if (getContentSha1.equals("No such key")) {  //not staged for addition
-                if (!isTracked(toRead, commitRead)) {   //not tracked
-                    System.out.println("No reason ro remove the file.");
-                    System.exit(0);
-                } else {    //not staged for addition, but it's tracked by parent commit
-                    String BID = commitRead.archive.get(fileName);
-                    stageFor(fileName, getBlob(BID), removed);
-                    restrictedDelete(toRead);
-                }
-            } else if (!getContentSha1.equals(toReadSha1)) {    //staged for addition, but the content has been changed.
-                System.out.println("No reason to remove the file.");
+        if (getContentSha1.equals("No such key")) {  //not staged for addition
+            if (!isTracked(toRead, commitRead)) {   //not tracked
+                System.out.println("No reason ro remove the file.");
                 System.exit(0);
-            } else {    //staged for addition, if it's tracked, delete it, and just unstage if not.
-                if (isTracked(toRead, commitRead)) {
-                    String BID = stageRead.fbPair.get(fileName);
-                    stageFor(fileName, getBlob(BID), removed);
-                    unStage(stageRead, fileName, added);
-                    restrictedDelete(toRead);
-                } else {
-                    unStage(stageRead, fileName, added);
-                }
+            } else {    //not staged for addition, but it's tracked by parent commit
+                String BID = commitRead.archive.get(fileName);
+                stageFor(fileName, getBlob(BID), removed);
+                restrictedDelete(toRead);
             }
+        } else if (!getContentSha1.equals(toReadSha1)) {    //staged for addition, but the content has been changed.
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        } else {    //staged for addition, if it's tracked, delete it, and just unstage if not.
+            if (isTracked(toRead, commitRead)) {
+                String BID = stageRead.fbPair.get(fileName);
+                stageFor(fileName, getBlob(BID), removed);
+                unStage(stageRead, fileName, added);
+                restrictedDelete(toRead);
+            } else {
+                unStage(stageRead, fileName, added);
+            }
+        }
     }
     private static Blob getBlob(String BID) {
         File blobRead = join(BLOBS_DIR, BID);
@@ -197,7 +197,8 @@ public class Repository {
         Commit current = new Commit(message, getActiveBranch(), parent2);
         current.setArchive(fromCommitFile(getActiveBranch()).archive);
         modifyArchive(current.archive);
-        String sha1Generator = current.archive.toString() + current.getParent() + current.getTimeStamp().toString() + current.getMessage();
+        String sha1Generator = current.archive.toString() + current.getParent()
+                + current.getTimeStamp().toString() + current.getMessage();
         current.CID = sha1(sha1Generator);
         writeContents(activeBranchFile(), current.CID);
         writeObject(current.getToFile(), current);
@@ -289,14 +290,17 @@ public class Repository {
         System.out.print("\n");
     }
 
-    private static Set<String> untrackedFiles (Set<String> directoryFiles) {
+    private static Set<String> untrackedFiles(Set<String> directoryFiles) {
         Commit commit = getHeadCommit();
         Set<String> unTracked = new HashSet<>();
         for (String fileName : directoryFiles) {
             //boolean isTracked = isTracked(join(CWD, fileName), commit);
             HashMap<String, String> map = commit.archive;
-            if (fromStaged(removed).fbPair.containsKey(fileName) ||
-                    (!fromStaged(added).fbPair.containsKey(fileName) && !map.containsKey(fileName))) {
+            if (fromStaged(removed).fbPair.containsKey(fileName)
+                    ||
+                    (!fromStaged(added).fbPair.containsKey(fileName)
+                            &&
+                            !map.containsKey(fileName))) {
                 unTracked.add(fileName);
             }
         }
@@ -311,8 +315,11 @@ public class Repository {
         for (String fileName : directoryFiles) {
             File toCompare = join(CWD, fileName);
             fileToCompare.put(fileName, new Blob(toCompare).BID);
-            if ((addedFiles.containsKey(fileName) && !addedFiles.get(fileName).equals(fileToCompare.get(fileName)))
-                    || (commit.archive.containsKey(fileName) && !commit.archive.get(fileName).equals(fileToCompare.get(fileName)))) {
+            if ((addedFiles.containsKey(fileName)
+                    && !addedFiles.get(fileName).equals(fileToCompare.get(fileName)))
+                    ||
+                    (commit.archive.containsKey(fileName)
+                            && !commit.archive.get(fileName).equals(fileToCompare.get(fileName)))) {
                 toDisplay.add(fileName);
             }
         }
@@ -506,7 +513,7 @@ public class Repository {
                     }
                 }
             } else {    // unmodified in head
-                 if (!headFile.equals(otherFile)) {     // 1 add the file in other
+                if (!headFile.equals(otherFile)) {     // 1 add the file in other
                     checkoutFile(fileName, branchToMerge);
                     stageFor(fileName, getBlob(otherFile), added);
                 } else {    // unchanged all the time
@@ -702,14 +709,15 @@ public class Repository {
         Set<String> untracked = untrackedFiles(directoryFiles);
         File branchFile = join(BRANCH_DIR, branchName);
         if (branchFile.exists()) {
-            if (readContentsAsString(HEAD).equals(branchName)) {    //the checkout branch is current branch
+            if (readContentsAsString(HEAD).equals(branchName)) {
                 System.out.println("No need to checkout the current branch.");
             } else {    //
                 Commit commit = getCommit(getActiveBranch());
                 if (!untracked.isEmpty()) {
                     for (String fileName : untracked) {
                         if (!commit.archive.containsKey(fileName)) {
-                            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                            System.out.println("There is an untracked file in the way; " +
+                                    "delete it, or add and commit it first.");
                             System.exit(0);
                         }
                     }
